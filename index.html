@@ -53,31 +53,32 @@
 
         // Evento de detecção de código
         Quagga.onDetected(async function(result) {
-            const code = result.codeResult.code;
-            document.getElementById('isbn').value = code;
-            
-            // Pausa o scanner para buscar dados
-            Quagga.stop();
-            document.getElementById('loadTitle').style.display = "inline-block";
+    const code = result.codeResult.code;
+    document.getElementById('isbn').value = code;
+    Quagga.stop(); // Para a câmera para economizar processamento
+    
+    document.getElementById('loadTitle').style.display = "inline-block";
 
-            try {
-                const response = await fetch(`${SCRIPT_URL}?isbn=${code}`);
-                const livro = await response.json();
-                
-                if (livro && livro.title) {
-                    document.getElementById('titulo').value = livro.title;
-                    document.getElementById('autor').value = livro.authors ? livro.authors.join(", ") : "Desconhecido";
-                } else {
-                    alert("Livro não encontrado. Por favor, preencha manualmente.");
-                }
-            } catch (e) {
-                console.error("Erro na busca:", e);
-            } finally {
-                document.getElementById('loadTitle').style.display = "none";
-                // Reinicia o scanner após 5 segundos se necessário (opcional)
-                setTimeout(() => { Quagga.start(); }, 5000);
-            }
-        });
+    try {
+        // Chamada para o seu script
+        const response = await fetch(`${SCRIPT_URL}?isbn=${code}`);
+        const livro = await response.json();
+        
+        if (livro && livro.title) {
+            document.getElementById('titulo').value = livro.title;
+            document.getElementById('autor').value = (livro.authors && livro.authors.length > 0) 
+                ? livro.authors.join(", ") 
+                : "Autor não informado";
+        } else {
+            alert("Livro não encontrado na base. Digite o título manualmente.");
+        }
+    } catch (e) {
+        console.error("Erro:", e);
+        alert("Erro ao consultar o Google. Verifique se o Script foi publicado como 'Qualquer pessoa'.");
+    } finally {
+        document.getElementById('loadTitle').style.display = "none";
+    }
+});
 
         // Envia os dados para a Planilha
         async function salvarLivro() {
